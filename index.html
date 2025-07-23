@@ -1,204 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CYM 2025 Leader Tracker</title>
-  <style>
-    body { font-family: sans-serif; background: #f4f4f4; margin: 0; }
-    header { background: #222; color: white; padding: 10px; text-align: center; font-weight: bold; }
-    #calendar-container { padding: 20px; background: white; margin: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    table.calendar { width: 100%; border-collapse: collapse; }
-    table.calendar th, table.calendar td { border: 1px solid #ccc; width: 14.28%; height: 80px; text-align: center; vertical-align: top; position: relative; }
-    table.calendar th { background: #eee; }
-    .day-number { position: absolute; top: 4px; left: 4px; font-size: 12px; font-weight: bold; }
-    .checkbox-day { position: absolute; bottom: 4px; left: 4px; width: 30px; height: 30px; cursor: pointer; transform: scale(1.5); }
-    .meeting-board { padding: 20px; background: white; margin: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    .meeting-board h4 { margin-bottom: 10px; }
-    .meeting-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .status-box { width: 30px; height: 30px; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; background: gray; }
-    .legend span { margin-right: 15px; font-size: 14px; }
-    .present { color: green; }
-    .absent { color: red; }
-    .nomeeting { color: gray; }
-    #checkbox-counter { text-align: center; font-weight: bold; padding: 10px; }
-  </style>
-</head>
-<body>
-  <header>CYM 2025 Leader Tracker</header>
-  <div id="auth-section">
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
-  </div>
-  <div id="app" style="display:none;">
-    <p>Welcome, <span id="user-email"></span> <button onclick="logout()">Logout</button></p>
-    <div id="calendar-container"></div>
-    <div id="checkbox-counter">Checked Days: <span id="checked-count">0</span></div>
-    <div class="meeting-board">
-      <div class="legend">
-        <span class="present">Green = Present</span>
-        <span class="absent">Red = Absent</span>
-        <span class="nomeeting">Gray = No Meeting</span>
-      </div>
-      <h4>Meetings</h4>
-      <div id="meeting-list"></div>
-    </div>
-  </div>
+    function renderMeetingStatus() {
+      const list = document.getElementById("meeting-list");
+      list.innerHTML = "";
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBxerHpUJgqIy6pSw2dAKuqrFVdO9Wznwo",
-      authDomain: "data-f1e07.firebaseapp.com",
-      projectId: "data-f1e07",
-      storageBucket: "data-f1e07.appspot.com",
-      messagingSenderId: "544766634870",
-      appId: "1:544766634870:web:7ad7c96953cf450eaee857",
-      measurementId: "G-072SX0TV3B"
-    };
+      meetingTypes.forEach(name => {
+        const row = document.createElement("div");
+        row.className = "meeting-item";
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+        // Meeting name label
+        const meetingLabel = document.createElement("span");
+        meetingLabel.textContent = name;
+        meetingLabel.style.width = "180px";
+        row.appendChild(meetingLabel);
 
-    const meetingTypes = [
-      "WIN12 MEETING",
-      "DISCIPLESHIP MEETING",
-      "CELL GROUP",
-      "CYM NIGHT",
-      "SUNDAY SERVICES",
-      "THURSDAY TRAINING",
-      "PRAYER MEETING"
-    ];
+        // Week 1 to Week 5 boxes
+        for (let i = 1; i <= 5; i++) {
+          const label = document.createElement("span");
+          label.textContent = `Week ${i}`;
+          label.style.fontSize = "12px";
+          label.style.marginBottom = "4px";
 
-    function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+          const box = document.createElement("div");
+          box.className = "status-box";
+          box.title = `Click to toggle Week ${i} status`;
 
-      if (email === "admin@qc.com" && password !== "qcadmin") {
-        alert("Incorrect admin password.");
-        return;
-      }
+          box.onclick = () => {
+            if (box.style.background === "gray") box.style.background = "green";
+            else if (box.style.background === "green") box.style.background = "red";
+            else box.style.background = "gray";
+          };
 
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("auth-section").style.display = "none";
-          document.getElementById("app").style.display = "block";
-          document.getElementById("user-email").innerText = email;
-          generateCalendar();
-          renderMeetingStatus();
-        })
-        .catch(e => alert(e.message));
+          const wrapper = document.createElement("div");
+          wrapper.style.display = "flex";
+          wrapper.style.flexDirection = "column";
+          wrapper.style.alignItems = "center";
+          wrapper.style.marginRight = "12px";
+          wrapper.appendChild(label);
+          wrapper.appendChild(box);
+
+          row.appendChild(wrapper);
+        }
+
+        list.appendChild(row);
+      });
     }
-
-    function register() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      if (email === "admin@qc.com") {
-        alert("You cannot register as admin.");
-        return;
-      }
-
-      auth.createUserWithEmailAndPassword(email, password)
-        .then(() => alert("Registered. Please login."))
-        .catch(e => alert(e.message));
-    }
-
-    function logout() {
-      auth.signOut();
-      document.getElementById("auth-section").style.display = "block";
-      document.getElementById("app").style.display = "none";
-    }
-
-    let checkedDays = 0;
-
-    function generateCalendar() {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const firstDayIndex = new Date(year, month, 1).getDay();
-
-      checkedDays = 0;
-      document.getElementById("checked-count").innerText = "0";
-
-      let html = '<table class="calendar">';
-      html += '<tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr><tr>';
-
-      for (let i = 0; i < firstDayIndex; i++) {
-        html += '<td></td>';
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        if ((firstDayIndex + day - 1) % 7 === 0 && day > 1) html += '</tr><tr>';
-        html += `<td><div class="day-number">${day}</div>
-                    <input type="checkbox" class="checkbox-day" onchange="saveDayCheck(${day}, this)">
-                 </td>`;
-      }
-
-      html += '</tr></table>';
-      document.getElementById("calendar-container").innerHTML = html;
-    }
-
-    function saveDayCheck(day, el) {
-      const user = auth.currentUser;
-      if (!user) return;
-      const today = new Date();
-      const month = today.toLocaleString('default', { month: 'long' });
-      const data = { [`${month}_Day_${day}`]: el.checked };
-      db.collection("checkboxes").doc(user.email).set(data, { merge: true });
-
-      if (el.checked) checkedDays++;
-      else checkedDays--;
-      document.getElementById("checked-count").innerText = checkedDays;
-    }
-
-function renderMeetingStatus() {
-  const list = document.getElementById("meeting-list");
-  list.innerHTML = "";
-
-  meetingTypes.forEach(name => {
-    const row = document.createElement("div");
-    row.className = "meeting-item";
-    
-    // Meeting name label with spacing
-    row.innerHTML = `<span style="width: 180px;">${name}</span>`;
-
-    // Add Week 1 to Week 5 status boxes with labels
-    for (let i = 1; i <= 5; i++) {
-      const label = document.createElement("span");
-      label.textContent = `Week ${i}`;
-      label.style.fontSize = "12px";
-      label.style.marginBottom = "4px";
-
-      const box = document.createElement("div");
-      box.className = "status-box";
-      box.title = `Click to toggle Week ${i} status`;
-      box.onclick = () => {
-        if (box.style.background === "gray") box.style.background = "green";
-        else if (box.style.background === "green") box.style.background = "red";
-        else box.style.background = "gray";
-      };
-
-      const stack = document.createElement("div");
-      stack.style.display = "flex";
-      stack.style.flexDirection = "column";
-      stack.style.alignItems = "center";
-      stack.style.marginRight = "12px";
-      stack.appendChild(label);
-      stack.appendChild(box);
-
-      row.appendChild(stack);
-    }
-
-    list.appendChild(row);
-  });
-}
   </script>
 </body>
 </html>
