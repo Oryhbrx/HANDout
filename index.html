@@ -43,12 +43,43 @@
       color: white;
       background: #888;
     }
-    .attendance-grid button.P { background: #4CAF50; } /* Present - Green */
-    .attendance-grid button.A { background: #f44336; } /* Absent - Red */
-    .attendance-grid button.NM { background: #999; }    /* No Meeting - Gray */
+    .attendance-grid button.P { background: #4CAF50; }
+    .attendance-grid button.A { background: #f44336; }
+    .attendance-grid button.NM { background: #999; }
     .legend {
       font-size: 0.9em;
       margin: 5px 0 15px;
+    }
+    #downloadBtn {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .calendar {
+      margin-top: 30px;
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .calendar h4 {
+      margin-top: 0;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      text-align: center;
+    }
+    .calendar-cell {
+      background: #f0f0f0;
+      padding: 5px;
+      border-radius: 4px;
+    }
+    .calendar-cell input {
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -60,6 +91,7 @@
   <div class="container">
     <label for="userEmail">Insert Name:</label>
     <input type="text" id="userEmail" placeholder="Your name or email" />
+
     <div class="month-buttons">
       <button onclick="loadMonth(0)">January</button>
       <button onclick="loadMonth(1)">February</button>
@@ -83,7 +115,16 @@
     </div>
 
     <div class="attendance-grid" id="attendance-grid">
-      <!-- Dynamic content goes here -->
+      <!-- Dynamic content -->
+    </div>
+
+    <button id="downloadBtn" onclick="downloadAttendance()">Download Attendance</button>
+
+    <div class="calendar" id="calendar">
+      <h4>Calendar for <span id="calendar-title">January 2025</span></h4>
+      <div class="calendar-grid" id="calendar-grid">
+        <!-- Calendar goes here -->
+      </div>
     </div>
   </div>
 
@@ -104,8 +145,13 @@
       "July", "August", "September", "October", "November", "December"
     ];
 
+    let currentMonthIndex = 0;
+
     function loadMonth(monthIndex) {
+      currentMonthIndex = monthIndex;
       document.getElementById("month-title").textContent = months[monthIndex];
+      document.getElementById("calendar-title").textContent = `${months[monthIndex]} 2025`;
+
       const grid = document.getElementById("attendance-grid");
       grid.innerHTML = "";
 
@@ -139,9 +185,63 @@
 
         grid.appendChild(weekRow);
       });
+
+      buildCalendar(2025, monthIndex);
     }
 
-    // Load January on startup
+    function buildCalendar(year, month) {
+      const calendarGrid = document.getElementById("calendar-grid");
+      calendarGrid.innerHTML = "";
+
+      const firstDay = new Date(year, month, 1).getDay(); // 0 = Sunday
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // Blank cells before first day
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement("div");
+        calendarGrid.appendChild(emptyCell);
+      }
+
+      // Fill in days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayCell = document.createElement("div");
+        dayCell.className = "calendar-cell";
+        dayCell.innerHTML = `
+          <div>${day}</div>
+          <input type="checkbox" />
+        `;
+        calendarGrid.appendChild(dayCell);
+      }
+    }
+
+    function downloadAttendance() {
+      const name = document.getElementById("userEmail").value.trim() || "Anonymous";
+      const month = months[currentMonthIndex];
+      const grid = document.getElementById("attendance-grid");
+      const rows = grid.querySelectorAll(".week-row");
+
+      let text = `Attendance Report for ${name} - ${month}\n\n`;
+
+      rows.forEach((row, index) => {
+        const meetingName = meetings[Math.floor(index)];
+        const buttons = row.querySelectorAll("button");
+        const weekStatuses = [];
+
+        buttons.forEach((btn, i) => {
+          weekStatuses.push(`${weeks[i]}: ${btn.textContent}`);
+        });
+
+        text += `${meetingName}\n  ${weekStatuses.join(" | ")}\n`;
+      });
+
+      const blob = new Blob([text], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${name.replace(/\s+/g, "_")}_${month}_attendance.txt`;
+      a.click();
+    }
+
+    // Load January on page load
     window.onload = () => {
       loadMonth(0);
     };
