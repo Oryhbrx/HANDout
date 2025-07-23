@@ -1,149 +1,15 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CYM Leader Tracker</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
-    .hidden { display: none; }
-    .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; }
-    input, select, button { padding: 8px; margin: 5px 0; width: 100%; }
-    #logoutBtn { margin-top: 10px; }
-  </style>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-<h2>CYM Leader Tracker</h2>
-
-<div id="authSection" class="section">
-  <input id="email" type="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <select id="role">
-    <option value="user">User</option>
-    <option value="admin">Admin</option>
-  </select>
-  <button onclick="signup()">Sign Up</button>
-  <button onclick="login()">Login</button>
-</div>
-
-<div id="userSection" class="section hidden">
-  <h3>User Dashboard</h3>
-  <input id="memberName" placeholder="Enter member name">
-  <input type="month" id="monthPicker">
-  <div id="userData"></div>
-</div>
-
-<div id="adminSection" class="section hidden">
-  <h3>Admin Dashboard (All Users Data)</h3>
-  <div id="allUserData"></div>
-</div>
-
-<button id="logoutBtn" class="hidden" onclick="logout()">Logout</button>
-
-<script>
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-apiKey: "AIzaSyANOp3tzEMmvPzcysdu7wEQd-kCqmi1WgY",
-authDomain: "webhandouts-e0a35.firebaseapp.com",
-projectId: "webhandouts-e0a35",
-storageBucket: "webhandouts-e0a35.firebasestorage.app",
-messagingSenderId: "284574980946",
-appId: "1:284574980946:web:30903fcbb5dcb6e1ad388b",
-measurementId: "G-P05PML348F"
-};
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      document.getElementById("authSection").classList.add("hidden");
-      document.getElementById("logoutBtn").classList.remove("hidden");
-
-      const doc = await db.collection("users").doc(user.uid).get();
-      const role = doc.data()?.role;
-
-      if (role === "admin") {
-        document.getElementById("adminSection").classList.remove("hidden");
-        loadAllUserData();
-      } else {
-        document.getElementById("userSection").classList.remove("hidden");
-        document.getElementById("monthPicker").addEventListener("change", updateUserData);
-        document.getElementById("memberName").addEventListener("input", updateUserData);
-      }
-    } else {
-      document.getElementById("authSection").classList.remove("hidden");
-      document.getElementById("userSection").classList.add("hidden");
-      document.getElementById("adminSection").classList.add("hidden");
-      document.getElementById("logoutBtn").classList.add("hidden");
-    }
-  });
-
-  async function signup() {
-    const email = emailInput.value;
-    const password = passwordInput.value;
-    const role = roleInput.value;
-
-    const userCred = await auth.createUserWithEmailAndPassword(email, password);
-    await db.collection("users").doc(userCred.user.uid).set({ email, role });
-    alert("Signup successful!");
-  }
-
-  async function login() {
-    const email = emailInput.value;
-    const password = passwordInput.value;
-    await auth.signInWithEmailAndPassword(email, password);
-  }
-
-  function logout() {
-    auth.signOut();
-  }
-
-  async function updateUserData() {
-    const uid = auth.currentUser.uid;
-    const member = document.getElementById("memberName").value.trim();
-    const month = document.getElementById("monthPicker").value;
-
-    if (!member || !month) return;
-
-    const docRef = db.collection("tracker").doc(uid + "_" + member + "_" + month);
-    let doc = await docRef.get();
-
-    if (!doc.exists) {
-      await docRef.set({ devotions: [], attendance: [] });
-      doc = await docRef.get();
-    }
-
-    const data = doc.data();
-    document.getElementById("userData").innerHTML = `
-      <strong>${member} - ${month}</strong><br>
-      Devotions: ${data.devotions.length} days<br>
-      Attendance: ${data.attendance.length} meetings
-    `;
-  }
-
-  async function loadAllUserData() {
-    const snapshot = await db.collection("tracker").get();
-    const out = [];
-
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      out.push(`<p><strong>${doc.id}</strong><br>
-        Devotions: ${d.devotions.length}<br>
-        Attendance: ${d.attendance.length}</p>`);
-    });
-
-    document.getElementById("allUserData").innerHTML = out.join('');
-  }
-
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const roleInput = document.getElementById("role");
-</script>
-
+  <h1>CYM Leader Tracker (Login & Admin View)</h1>
+  <div id="app"></div>
+  <script src="script.js"></script>
 </body>
 </html>
