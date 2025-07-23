@@ -3,285 +3,209 @@
 <head>
   <meta charset="UTF-8" />
   <title>CYM 2025 Leader Tracker</title>
+  <script defer src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script defer>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxerHpUJgqIy6pSw2dAKuqrFVdO9Wznwo",
+      authDomain: "data-f1e07.firebaseapp.com",
+      projectId: "data-f1e07",
+      storageBucket: "data-f1e07.firebasestorage.app",
+      messagingSenderId: "544766634870",
+      appId: "1:544766634870:web:7ad7c96953cf450eaee857",
+      measurementId: "G-072SX0TV3B"
+    };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const adminEmail = "admin@qc.com";
+      const adminPassword = "qcadmin";
+
+      const meetings = ["W12 MEETING", "W12 DISCIPLESHIP", "CELL GROUP", "SUNDAY SERVICE", "CYM NIGHT", "THURSDAY TRAINING", "PRAYER MEETING"];
+      const weeks = ["1st week", "2nd week", "3rd week", "4th week", "5th week"];
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+      let currentUser = null;
+      let selectedMonth = 0;
+
+      function renderMonthButtons() {
+        const mb = document.getElementById("month-buttons");
+        months.forEach((m, i) => {
+          const btn = document.createElement("button");
+          btn.textContent = m;
+          btn.onclick = () => {
+            loadMonth(i);
+            generateCalendar(i);
+          };
+          mb.appendChild(btn);
+        });
+      }
+
+      async function loadMonth(monthIndex) {
+        selectedMonth = monthIndex;
+        document.getElementById("month-title").textContent = months[monthIndex];
+        const grid = document.getElementById("attendance-grid");
+        grid.innerHTML = "";
+
+        const docRef = db.collection("users").doc(currentUser.uid);
+        const docSnap = await docRef.get();
+        const data = docSnap.exists ? docSnap.data() : {};
+        const attendance = data.attendance?.[monthIndex] || {};
+
+        meetings.forEach(meeting => {
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = meeting;
+          grid.appendChild(label);
+
+          const weekRow = document.createElement("div");
+          weekRow.className = "week-row";
+
+          weeks.forEach((_, weekIndex) => {
+            const btn = document.createElement("button");
+            const key = `${meeting}_${weekIndex}`;
+            const state = attendance[key] || "NM";
+            btn.textContent = state;
+            btn.className = state;
+
+            btn.onclick = async function () {
+              const states = ["NM", "P", "A"];
+              let idx = states.indexOf(btn.className);
+              idx = (idx + 1) % states.length;
+              const next = states[idx];
+              btn.textContent = next;
+              btn.className = next;
+              await saveAttendance(monthIndex, key, next);
+            };
+
+            weekRow.appendChild(btn);
+          });
+
+          grid.appendChild(weekRow);
+        });
+      }
+
+      async function saveAttendance(month, key, value) {
+        const adminRef = db.collection("users").doc(adminEmail);
+        const adminSnap = await adminRef.get();
+        const existing = adminSnap.exists ? adminSnap.data().attendance || {} : {};
+        const updated = {
+          ...existing,
+          [month]: {
+            ...(existing[month] || {}),
+            [`${currentUser.email}_${key}`]: value
+          }
+        };
+        await adminRef.set({ attendance: updated }, { merge: true });
+      }
+
+      async function generateCalendar(monthIndex) {
+        const calendar = document.getElementById("calendar");
+        calendar.innerHTML = "";
+        const daysInMonth = new Date(2025, monthIndex + 1, 0).getDate();
+
+        const docSnap = await db.collection("users").doc(currentUser.uid).get();
+        const calData = docSnap.exists ? docSnap.data().calendar || {} : {};
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const box = document.createElement("div");
+          box.className = "day";
+          const id = `day_${monthIndex}_${d}`;
+          box.innerHTML = `${d}<br><input type='checkbox' id='${id}' />`;
+          const checkbox = box.querySelector("input");
+          checkbox.checked = !!calData[id];
+
+          checkbox.addEventListener("change", async () => {
+            const userRef = db.collection("users").doc(currentUser.uid);
+            const snap = await userRef.get();
+            const existing = snap.exists ? snap.data().calendar || {} : {};
+            const updated = {
+              ...existing,
+              [id]: checkbox.checked
+            };
+            await userRef.set({ calendar: updated }, { merge: true });
+          });
+
+          calendar.appendChild(box);
+        }
+      }
+
+      window.login = function () {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => location.reload())
+          .catch(e => alert(e.message));
+      }
+
+      window.register = function () {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => location.reload())
+          .catch(e => alert(e.message));
+      }
+
+      window.logout = function () {
+        auth.signOut().then(() => location.reload());
+      }
+
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = user;
+          document.getElementById("auth-box").classList.add("hidden");
+          document.getElementById("app").classList.remove("hidden");
+          document.getElementById("userEmail").textContent = user.email;
+          renderMonthButtons();
+          loadMonth(0);
+          generateCalendar(0);
+        }
+      });
+    });
+  </script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #ddd;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #111;
-      color: white;
-      padding: 15px;
-      text-align: center;
-    }
-    .container {
-      padding: 20px;
-    }
-    .month-buttons button {
-      margin: 2px;
-      padding: 5px 10px;
-    }
-    .attendance-grid {
-      margin-top: 10px;
-    }
-    .attendance-grid .label {
-      margin: 10px 0 5px;
-      font-weight: bold;
-    }
-    .attendance-grid .week-row {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 5px;
-    }
-    .attendance-grid button {
-      flex: 1;
-      padding: 8px;
-      border: none;
-      cursor: pointer;
-      color: white;
-      background: #888;
-    }
+    body { font-family: Arial; background: #ddd; margin: 0; padding: 0; }
+    header { background: #111; color: #fff; padding: 15px; text-align: center; }
+    .container { padding: 20px; }
+    .hidden { display: none; }
+    .auth-box { background: #fff; padding: 20px; margin: 20px auto; width: 300px; border-radius: 10px; }
+    .month-buttons button { margin: 2px; padding: 5px 10px; }
+    .attendance-grid { margin-top: 10px; }
+    .attendance-grid .label { margin: 10px 0 5px; font-weight: bold; }
+    .attendance-grid .week-row { display: flex; gap: 5px; margin-bottom: 5px; }
+    .attendance-grid button { flex: 1; padding: 8px; border: none; cursor: pointer; color: white; background: #888; }
     .attendance-grid button.P { background: #4CAF50; }
     .attendance-grid button.A { background: #f44336; }
     .attendance-grid button.NM { background: #999; }
-    .legend {
-      font-size: 0.9em;
-      margin: 5px 0 15px;
-    }
-    #downloadBtn {
-      margin-top: 20px;
-      padding: 10px 15px;
-      background-color: #333;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .calendar {
-      margin-top: 30px;
-      background: white;
-      padding: 15px;
-      border-radius: 5px;
-    }
-    .calendar h4 {
-      margin-top: 0;
-    }
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      text-align: center;
-    }
-    .calendar-cell {
-      background: #f0f0f0;
-      padding: 5px;
-      border-radius: 4px;
-    }
-    .calendar-cell input {
-      margin-top: 5px;
-    }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
+    .day { background: white; padding: 10px; border: 1px solid #ccc; text-align: center; }
+    .legend { font-size: 0.9em; margin: 5px 0 15px; }
   </style>
 </head>
 <body>
-  <header>
-    <h2>CYM 2025 Leader Tracker</h2>
-  </header>
-
-  <div class="container">
-    <label for="userEmail">Insert Name:</label>
-    <input type="text" id="userEmail" placeholder="Your name or email" />
-
-    <div class="month-buttons">
-      <button onclick="loadMonth(0)">January</button>
-      <button onclick="loadMonth(1)">February</button>
-      <button onclick="loadMonth(2)">March</button>
-      <button onclick="loadMonth(3)">April</button>
-      <button onclick="loadMonth(4)">May</button>
-      <button onclick="loadMonth(5)">June</button>
-      <button onclick="loadMonth(6)">July</button>
-      <button onclick="loadMonth(7)">August</button>
-      <button onclick="loadMonth(8)">September</button>
-      <button onclick="loadMonth(9)">October</button>
-      <button onclick="loadMonth(10)">November</button>
-      <button onclick="loadMonth(11)">December</button>
-    </div>
-
-    <h3 id="month-title">January</h3>
+  <header><h2>CYM 2025 Leader Tracker</h2></header>
+  <div class="auth-box" id="auth-box">
+    <h3>Login / Register</h3>
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+  </div>
+  <div class="container hidden" id="app">
+    <p>Welcome, <span id="userEmail"></span> <button onclick="logout()">Logout</button></p>
+    <div class="month-buttons" id="month-buttons"></div>
+    <h3 id="month-title"></h3>
     <div class="legend">
       <strong>Legend:</strong> <span style="color: green;">Green</span> = Present,
       <span style="color: red;">Red</span> = Absent,
       <span style="color: gray;">Gray</span> = No Meeting
     </div>
-
     <div class="attendance-grid" id="attendance-grid"></div>
-    <button id="downloadBtn" onclick="downloadAttendance()">Download Attendance</button>
-
-    <div class="calendar" id="calendar">
-      <h4>Calendar for <span id="calendar-title">January 2025</span></h4>
-      <div class="calendar-grid" id="calendar-grid"></div>
-    </div>
+    <div class="calendar" id="calendar"></div>
   </div>
-
-  <script>
-    const meetings = [
-      "W12 MEETING",
-      "W12 DISCIPLESHIP",
-      "CELL GROUP",
-      "SUNDAY SERVICE",
-      "CYM NIGHT",
-      "THURSDAY TRAINING",
-      "PRAYER MEETING"
-    ];
-    const weeks = ["1st week", "2nd week", "3rd week", "4th week", "5th week"];
-    const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-
-    let currentMonthIndex = 0;
-
-    function getUserKey(suffix = "") {
-      const name = document.getElementById("userEmail").value.trim() || "anonymous";
-      return `CYM_${name}_${months[currentMonthIndex]}_${suffix}`;
-    }
-
-    function saveAttendance() {
-      const data = [];
-      const rows = document.querySelectorAll("#attendance-grid .week-row");
-      rows.forEach(row => {
-        const statusRow = [];
-        row.querySelectorAll("button").forEach(btn => {
-          statusRow.push(btn.textContent);
-        });
-        data.push(statusRow);
-      });
-      localStorage.setItem(getUserKey("attendance"), JSON.stringify(data));
-    }
-
-    function loadAttendance() {
-      const saved = localStorage.getItem(getUserKey("attendance"));
-      return saved ? JSON.parse(saved) : null;
-    }
-
-    function saveCalendarChecks() {
-      const checkboxes = document.querySelectorAll("#calendar-grid input[type='checkbox']");
-      const states = Array.from(checkboxes).map(cb => cb.checked);
-      localStorage.setItem(getUserKey("calendar"), JSON.stringify(states));
-    }
-
-    function loadCalendarChecks() {
-      const saved = localStorage.getItem(getUserKey("calendar"));
-      return saved ? JSON.parse(saved) : [];
-    }
-
-    function loadMonth(monthIndex) {
-      currentMonthIndex = monthIndex;
-      document.getElementById("month-title").textContent = months[monthIndex];
-      document.getElementById("calendar-title").textContent = `${months[monthIndex]} 2025`;
-
-      const grid = document.getElementById("attendance-grid");
-      grid.innerHTML = "";
-
-      const savedAttendance = loadAttendance();
-      let rowIndex = 0;
-
-      meetings.forEach(meeting => {
-        const label = document.createElement("div");
-        label.className = "label";
-        label.textContent = meeting;
-        grid.appendChild(label);
-
-        const weekRow = document.createElement("div");
-        weekRow.className = "week-row";
-
-        weeks.forEach((_, weekIndex) => {
-          const btn = document.createElement("button");
-          let val = "NM";
-          if (savedAttendance && savedAttendance[rowIndex]) {
-            val = savedAttendance[rowIndex][weekIndex] || "NM";
-          }
-          btn.textContent = val;
-          btn.className = val;
-          btn.onclick = function () {
-            if (btn.className === "NM") {
-              btn.className = "P";
-              btn.textContent = "P";
-            } else if (btn.className === "P") {
-              btn.className = "A";
-              btn.textContent = "A";
-            } else {
-              btn.className = "NM";
-              btn.textContent = "NM";
-            }
-            saveAttendance();
-          };
-          weekRow.appendChild(btn);
-        });
-
-        grid.appendChild(weekRow);
-        rowIndex++;
-      });
-
-      buildCalendar(2025, monthIndex);
-    }
-
-    function buildCalendar(year, month) {
-      const grid = document.getElementById("calendar-grid");
-      grid.innerHTML = "";
-
-      const firstDay = new Date(year, month, 1).getDay(); // Sunday=0
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const savedChecks = loadCalendarChecks();
-
-      for (let i = 0; i < firstDay; i++) {
-        grid.appendChild(document.createElement("div")); // Empty cells
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const cell = document.createElement("div");
-        cell.className = "calendar-cell";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = savedChecks[day - 1] || false;
-        cb.onchange = saveCalendarChecks;
-
-        cell.innerHTML = `<div>${day}</div>`;
-        cell.appendChild(cb);
-        grid.appendChild(cell);
-      }
-    }
-
-    function downloadAttendance() {
-      const name = document.getElementById("userEmail").value.trim() || "Anonymous";
-      const month = months[currentMonthIndex];
-      const grid = document.getElementById("attendance-grid");
-      const rows = grid.querySelectorAll(".week-row");
-
-      let text = `Attendance Report for ${name} - ${month}\n\n`;
-
-      rows.forEach((row, index) => {
-        const meetingName = meetings[Math.floor(index)];
-        const buttons = row.querySelectorAll("button");
-        const weekStatuses = [];
-
-        buttons.forEach((btn, i) => {
-          weekStatuses.push(`${weeks[i]}: ${btn.textContent}`);
-        });
-
-        text += `${meetingName}\n  ${weekStatuses.join(" | ")}\n`;
-      });
-
-      const blob = new Blob([text], { type: "text/plain" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${name.replace(/\s+/g, "_")}_${month}_attendance.txt`;
-      a.click();
-    }
-
-    window.onload = () => {
-      loadMonth(0);
-    };
-  </script>
 </body>
 </html>
