@@ -1,327 +1,150 @@
-<!-- CYM Leader Tracker Merged Version -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CYM Leader Tracker</title>
+  <title>CYM 2025 Leader Tracker</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: #ddd;
       margin: 0;
       padding: 0;
     }
     header {
-      background: #222;
+      background: #111;
       color: white;
-      padding: 1em;
+      padding: 15px;
       text-align: center;
     }
     .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 1em;
+      padding: 20px;
     }
-    .section {
-      background: white;
-      padding: 1em;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .month-selector {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 1em;
-    }
-    .month-selector button {
-      padding: 0.5em 1em;
-      border: none;
-      background: #ccc;
-      cursor: pointer;
-    }
-    .month-selector button.active {
-      background: #4CAF50;
-      color: white;
-    }
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      margin-top: 1em;
-    }
-    .calendar div {
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 0.5em;
-      text-align: center;
-      font-size: 14px;
-    }
-    .calendar input[type="checkbox"] {
-      margin-top: 5px;
-    }
-    .attendance-section {
-      margin-top: 2em;
-    }
-    .attendance-section label {
-      font-weight: bold;
-      display: block;
-      margin-top: 1em;
+    .month-buttons button {
+      margin: 2px;
+      padding: 5px 10px;
     }
     .attendance-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 4px;
-      margin-top: 0.5em;
+      margin-top: 10px;
+    }
+    .attendance-grid .label {
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    .attendance-grid .week-row {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
     }
     .attendance-grid button {
-      padding: 0.4em;
-      background: #eee;
-      border: 1px solid #ccc;
+      flex: 1;
+      padding: 8px;
+      border: none;
       cursor: pointer;
+      color: white;
+      background: #888;
     }
-    .attendance-grid button.P { background: #4CAF50; color: white; }
-    .attendance-grid button.A { background: #f44336; color: white; }
-    .attendance-grid button.NM { background: #999; color: white; }
-    #logoutBtn { margin-top: 10px; }
+    .attendance-grid button.P { background: #4CAF50; } /* Present - Green */
+    .attendance-grid button.A { background: #f44336; } /* Absent - Red */
+    .attendance-grid button.NM { background: #999; }    /* No Meeting - Gray */
+    .legend {
+      font-size: 0.9em;
+      margin: 5px 0 15px;
+    }
   </style>
-  <!-- Firebase Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <header>
-    <h1>CYM 2025 Leader Tracker</h1>
-    <div id="user-info"></div>
+    <h2>CYM 2025 Leader Tracker</h2>
   </header>
 
   <div class="container">
-    <div id="authSection" class="section">
-      <input id="email" type="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Password" />
-      <select id="role">
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button onclick="signup()">Sign Up</button>
-      <button onclick="login()">Login</button>
+    <label for="userEmail">Insert Name:</label>
+    <input type="text" id="userEmail" placeholder="Your name or email" />
+    <div class="month-buttons">
+      <button onclick="loadMonth(0)">January</button>
+      <button onclick="loadMonth(1)">February</button>
+      <button onclick="loadMonth(2)">March</button>
+      <button onclick="loadMonth(3)">April</button>
+      <button onclick="loadMonth(4)">May</button>
+      <button onclick="loadMonth(5)">June</button>
+      <button onclick="loadMonth(6)">July</button>
+      <button onclick="loadMonth(7)">August</button>
+      <button onclick="loadMonth(8)">September</button>
+      <button onclick="loadMonth(9)">October</button>
+      <button onclick="loadMonth(10)">November</button>
+      <button onclick="loadMonth(11)">December</button>
     </div>
 
-    <div id="userSection" class="section hidden">
-      <label><strong>Insert Name:</strong></label>
-      <input type="text" id="username" placeholder="Type your full name..." />
-      <div class="month-selector" id="month-selector"></div>
-      <h2 id="month-title">January</h2>
-      <h3>DEVOTION: <span id='devotion-count'>0</span> days checked</h3>
-      <div id="calendar" class="calendar"></div>
-      <div class="attendance-section" id="attendance-forms"></div>
+    <h3 id="month-title">January</h3>
+    <div class="legend">
+      <strong>Legend:</strong> <span style="color: green;">Green</span> = Present,
+      <span style="color: red;">Red</span> = Absent,
+      <span style="color: gray;">Gray</span> = No Meeting
     </div>
 
-    <div id="adminSection" class="section hidden">
-      <h3>Admin Dashboard</h3>
-      <div id="allUserData"></div>
+    <div class="attendance-grid" id="attendance-grid">
+      <!-- Dynamic content goes here -->
     </div>
-
-    <button id="logoutBtn" class="hidden" onclick="logout()">Logout</button>
   </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyANOp3tzEMmvPzcysdu7wEQd-kCqmi1WgY",
-      authDomain: "webhandouts-e0a35.firebaseapp.com",
-      projectId: "webhandouts-e0a35",
-      storageBucket: "webhandouts-e0a35.appspot.com",
-      messagingSenderId: "284574980946",
-      appId: "1:284574980946:web:30903fcbb5dcb6e1ad388b"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const meetings = [
+      "W12 MEETING",
+      "W12 DISCIPLESHIP",
+      "CELL GROUP",
+      "SUNDAY SERVICE",
+      "CYM NIGHT",
+      "THURSDAY TRAINING",
+      "PRAYER MEETING"
+    ];
 
-    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const sections = ["W12 MEETING","W12 DISCIPLESHIP","CELL GROUP","SUNDAY SERVICE","CYM NIGHT","THURSDAY TRAINING","PRAYER MEETING"];
-    const daysInMonth = (m, y) => new Date(y, m + 1, 0).getDate();
+    const weeks = ["1st week", "2nd week", "3rd week", "4th week", "5th week"];
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
 
-    let currentMonth = 0;
+    function loadMonth(monthIndex) {
+      document.getElementById("month-title").textContent = months[monthIndex];
+      const grid = document.getElementById("attendance-grid");
+      grid.innerHTML = "";
 
-    function renderMonthButtons() {
-      const container = document.getElementById("month-selector");
-      container.innerHTML = "";
-      months.forEach((m, i) => {
-        const btn = document.createElement("button");
-        btn.textContent = m;
-        btn.classList.toggle("active", i === 0);
-        btn.onclick = () => {
-          currentMonth = i;
-          [...document.querySelectorAll(".month-selector button")].forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          renderCalendar();
-          renderAttendance();
-        };
-        container.appendChild(btn);
-      });
-    }
+      meetings.forEach(meeting => {
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = meeting;
+        grid.appendChild(label);
 
-    auth.onAuthStateChanged(async user => {
-      if (user) {
-        document.getElementById("authSection").classList.add("hidden");
-        document.getElementById("logoutBtn").classList.remove("hidden");
+        const weekRow = document.createElement("div");
+        weekRow.className = "week-row";
 
-        const doc = await db.collection("users").doc(user.uid).get();
-        const role = doc.data()?.role;
-
-        if (role === "admin") {
-          document.getElementById("adminSection").classList.remove("hidden");
-          loadAllUserData();
-        } else {
-          document.getElementById("userSection").classList.remove("hidden");
-          renderMonthButtons();
-          renderCalendar();
-          renderAttendance();
-        }
-      } else {
-        document.getElementById("authSection").classList.remove("hidden");
-        document.getElementById("userSection").classList.add("hidden");
-        document.getElementById("adminSection").classList.add("hidden");
-        document.getElementById("logoutBtn").classList.add("hidden");
-      }
-    });
-
-    async function signup() {
-      const email = email.value;
-      const password = password.value;
-      const roleVal = role.value;
-      const userCred = await auth.createUserWithEmailAndPassword(email, password);
-      await db.collection("users").doc(userCred.user.uid).set({ email, role: roleVal });
-      alert("Signup successful!");
-    }
-
-    async function login() {
-      await auth.signInWithEmailAndPassword(email.value, password.value);
-    }
-
-    function logout() {
-      auth.signOut();
-    }
-
-    function updateDevotionCount(devotions) {
-      document.getElementById("devotion-count").textContent = devotions.size;
-    }
-
-    async function renderCalendar() {
-      const uid = auth.currentUser.uid;
-      const member = document.getElementById("username").value.trim();
-      if (!member) return;
-
-      const month = currentMonth;
-      const year = 2025;
-      const days = daysInMonth(month, year);
-      monthTitle.textContent = months[month];
-      const docId = `${uid}_${member}_${year}-${String(month+1).padStart(2, '0')}`;
-      const ref = db.collection("tracker").doc(docId);
-      let snap = await ref.get();
-      if (!snap.exists) await ref.set({ devotions: [], attendance: {} });
-       const data = snap.data();
-      const devotions = new Set(data.devotions || []);
-      updateDevotionCount(devotions);
-
-      const calendar = document.getElementById("calendar");
-      calendar.innerHTML = "";
-
-      const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      weekdays.forEach(day => {
-        const cell = document.createElement("div");
-        cell.style.fontWeight = "bold";
-        cell.textContent = day;
-        calendar.appendChild(cell);
-      });
-
-      const firstDay = new Date(year, month, 1).getDay();
-      for (let i = 0; i < firstDay; i++) {
-        calendar.appendChild(document.createElement("div"));
-      }
-
-      for (let i = 1; i <= days; i++) {
-        const cell = document.createElement("div");
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = devotions.has(i);
-        checkbox.onchange = async () => {
-          devotions.has(i) ? devotions.delete(i) : devotions.add(i);
-          await ref.update({ devotions: Array.from(devotions) });
-          updateDevotionCount(devotions);
-        };
-        cell.innerHTML = `${i}<br>`;
-        cell.appendChild(checkbox);
-        calendar.appendChild(cell);
-      }
-    }
-
-    async function renderAttendance() {
-      const uid = auth.currentUser.uid;
-      const member = document.getElementById("username").value.trim();
-      if (!member) return;
-
-      const month = currentMonth;
-      const year = 2025;
-      const docId = `${uid}_${member}_${year}-${String(month+1).padStart(2, '0')}`;
-      const ref = db.collection("tracker").doc(docId);
-      let snap = await ref.get();
-      if (!snap.exists) await ref.set({ devotions: [], attendance: {} });
-      const data = snap.data();
-      const attendance = data.attendance || {};
-
-      const container = document.getElementById("attendance-forms");
-      container.innerHTML = `
-        <strong>FULL MONTH ATTENDANCE</strong><br/>
-        <strong>Legend:</strong> <span style='color:green'>Green = Present</span>, 
-        <span style='color:red'>Red = Absent</span>, 
-        <span style='color:gray'>Gray = No Meeting</span><br/><br/>
-      `;
-
-      sections.forEach(section => {
-        const label = document.createElement("label");
-        label.textContent = section;
-        container.appendChild(label);
-
-        const grid = document.createElement("div");
-        grid.className = "attendance-grid";
-        const weeks = attendance[section] || ["NM","NM","NM","NM","NM"];
-
-        weeks.forEach((status, i) => {
+        weeks.forEach(() => {
           const btn = document.createElement("button");
-          const nextStatus = { "P": "A", "A": "NM", "NM": "P" };
-          btn.textContent = ["1st","2nd","3rd","4th","5th"][i] + " week";
-          btn.className = status;
-          btn.onclick = async () => {
-            weeks[i] = nextStatus[weeks[i]];
-            await ref.update({ attendance: { ...attendance, [section]: weeks } });
-            renderAttendance(); // re-render for updated styles
+          btn.textContent = "NM";
+          btn.className = "NM";
+          btn.onclick = function () {
+            if (btn.className === "NM") {
+              btn.className = "P";
+              btn.textContent = "P";
+            } else if (btn.className === "P") {
+              btn.className = "A";
+              btn.textContent = "A";
+            } else {
+              btn.className = "NM";
+              btn.textContent = "NM";
+            }
           };
-          grid.appendChild(btn);
+          weekRow.appendChild(btn);
         });
 
-        container.appendChild(grid);
+        grid.appendChild(weekRow);
       });
     }
 
-    async function loadAllUserData() {
-      const snapshot = await db.collection("tracker").get();
-      const out = [];
-
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        const dev = d.devotions?.length || 0;
-        const att = Object.values(d.attendance || {}).reduce((total, arr) =>
-          total + arr.filter(a => a === "P").length, 0);
-        out.push(`<div class="section"><strong>${doc.id}</strong><br>Devotions: ${dev} days<br>Win12: ${att} meetings</div>`);
-      });
-
-      document.getElementById("allUserData").innerHTML = out.join('');
-    }
+    // Load January on startup
+    window.onload = () => {
+      loadMonth(0);
+    };
   </script>
 </body>
 </html>
