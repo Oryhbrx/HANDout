@@ -1,202 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>CYM Leader Tracker</title>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-    header { background: #222; color: #fff; padding: 1em; text-align: center; }
-    .container { max-width: 900px; margin: auto; padding: 1em; }
-    .month-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1em; }
-    .month-selector button { padding: 0.5em 1em; border: none; background: #ccc; cursor: pointer; }
-    .month-selector button.active { background: #4CAF50; color: white; }
-    .form-section { background: #fff; padding: 1em; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 1em; }
-    .calendar div { background: #fff; border: 1px solid #ccc; padding: 0.5em; text-align: center; font-size: 14px; }
-    .calendar input[type="checkbox"] { margin-top: 5px; }
-    .attendance-section { margin-top: 2em; }
-    .attendance-section label { font-weight: bold; display: block; margin-top: 1em; }
-    .attendance-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 0.5em; }
-    .attendance-grid button { padding: 0.4em; background: #eee; border: 1px solid #ccc; cursor: pointer; }
-    .attendance-grid button.P { background: #4CAF50; color: white; }
-    .attendance-grid button.A { background: #f44336; color: white; }
-    .attendance-grid button.NM { background: #999; color: white; }
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
+    .hidden { display: none; }
+    .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; }
+    input, select, button { padding: 8px; margin: 5px 0; width: 100%; }
+    #logoutBtn { margin-top: 10px; }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <header>
-    <h1>CYM 2025 Leader Tracker</h1>
-    <div id="user-info"></div>
-  </header>
 
-  <div class="container">
-    <p style="background:#fffae6; padding:10px; border:1px solid #f0c36d; border-radius:5px; font-weight:bold; text-align:center;">📸 TAKE A SCREENSHOT AND SEND IT TO THE QUALITY COMMITTEE</p>
-    
-    <div style="text-align:center; margin-top:10px; margin-bottom:20px;">
-      <label for="username"><strong>Insert Name:</strong></label>
-      <input type="text" id="username" name="username" placeholder="Type your full name..." style="padding:5px; width:80%; max-width:400px; margin-top:5px;" />
-    </div>
+<h2>CYM Leader Tracker</h2>
 
-    <div class="month-selector" id="month-selector"></div>
-    <div class="form-section">
-      <h2 id="month-title">January</h2>
-      <h3>DEVOTION: <span id='devotion-count'>0</span> days checked</h3>
-      <div id="calendar" class="calendar"></div>
-      <div class="attendance-section" id="attendance-forms"></div>
-    </div>
-  </div>
+<div id="authSection" class="section">
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <select id="role">
+    <option value="user">User</option>
+    <option value="admin">Admin</option>
+  </select>
+  <button onclick="signup()">Sign Up</button>
+  <button onclick="login()">Login</button>
+</div>
 
-  <script>
-    // 🔧 Replace with your Firebase config
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+<div id="userSection" class="section hidden">
+  <h3>User Dashboard</h3>
+  <input id="memberName" placeholder="Enter member name">
+  <input type="month" id="monthPicker">
+  <div id="userData"></div>
+</div>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+<div id="adminSection" class="section hidden">
+  <h3>Admin Dashboard (All Users Data)</h3>
+  <div id="allUserData"></div>
+</div>
 
-    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const sections = ["W12 MEETING", "W12 DISCIPLESHIP", "CELL GROUP", "SUNDAY SERVICE", "CYM NIGHT", "THURSDAY TRAINING", "PRAYER MEETING"];
-    const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
+<button id="logoutBtn" class="hidden" onclick="logout()">Logout</button>
 
-    const monthSelector = document.getElementById("month-selector");
-    const monthTitle = document.getElementById("month-title");
-    const calendarDiv = document.getElementById("calendar");
-    const attendanceForms = document.getElementById("attendance-forms");
+<script>
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+apiKey: "AIzaSyANOp3tzEMmvPzcysdu7wEQd-kCqmi1WgY",
+authDomain: "webhandouts-e0a35.firebaseapp.com",
+projectId: "webhandouts-e0a35",
+storageBucket: "webhandouts-e0a35.firebasestorage.app",
+messagingSenderId: "284574980946",
+appId: "1:284574980946:web:30903fcbb5dcb6e1ad388b",
+measurementId: "G-P05PML348F"
+};
 
-    let currentMonth = 0;
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    function renderMonthButtons() {
-      months.forEach((month, index) => {
-        const btn = document.createElement("button");
-        btn.textContent = month;
-        btn.classList.toggle("active", index === 0);
-        btn.onclick = () => {
-          currentMonth = index;
-          document.querySelectorAll(".month-selector button").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          renderCalendar();
-          renderAttendance();
-        };
-        monthSelector.appendChild(btn);
-      });
-    }
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      document.getElementById("authSection").classList.add("hidden");
+      document.getElementById("logoutBtn").classList.remove("hidden");
 
-    function updateDevotionCount() {
-      const checkboxes = document.querySelectorAll('#calendar input[type="checkbox"]');
-      const count = Array.from(checkboxes).filter(cb => cb.checked).length;
-      document.getElementById('devotion-count').textContent = count;
-    }
+      const doc = await db.collection("users").doc(user.uid).get();
+      const role = doc.data()?.role;
 
-    function renderCalendar() {
-      const year = 2025;
-      const month = currentMonth;
-      const days = daysInMonth(month, year);
-      const username = document.getElementById("username").value || "Anonymous";
-      monthTitle.textContent = months[month];
-      calendarDiv.innerHTML = "";
-
-      const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      weekdays.forEach(day => {
-        const dayCell = document.createElement("div");
-        dayCell.style.fontWeight = "bold";
-        dayCell.textContent = day;
-        calendarDiv.appendChild(dayCell);
-      });
-
-      const firstDay = new Date(year, month, 1).getDay();
-      for (let i = 0; i < firstDay; i++) {
-        calendarDiv.appendChild(document.createElement("div"));
+      if (role === "admin") {
+        document.getElementById("adminSection").classList.remove("hidden");
+        loadAllUserData();
+      } else {
+        document.getElementById("userSection").classList.remove("hidden");
+        document.getElementById("monthPicker").addEventListener("change", updateUserData);
+        document.getElementById("memberName").addEventListener("input", updateUserData);
       }
+    } else {
+      document.getElementById("authSection").classList.remove("hidden");
+      document.getElementById("userSection").classList.add("hidden");
+      document.getElementById("adminSection").classList.add("hidden");
+      document.getElementById("logoutBtn").classList.add("hidden");
+    }
+  });
 
-      for (let i = 1; i <= days; i++) {
-        const cell = document.createElement("div");
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        const devotionId = `${username}_${month}_${i}`;
-        db.collection("devotions").doc(devotionId).get().then(doc => {
-          if (doc.exists) checkbox.checked = doc.data().checked;
-        });
+  async function signup() {
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    const role = roleInput.value;
 
-        checkbox.addEventListener('change', () => {
-          db.collection("devotions").doc(devotionId).set({
-            user: username,
-            month,
-            day: i,
-            checked: checkbox.checked
-          });
-          updateDevotionCount();
-        });
+    const userCred = await auth.createUserWithEmailAndPassword(email, password);
+    await db.collection("users").doc(userCred.user.uid).set({ email, role });
+    alert("Signup successful!");
+  }
 
-        cell.innerHTML = `${i}<br>`;
-        cell.appendChild(checkbox);
-        calendarDiv.appendChild(cell);
-      }
+  async function login() {
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    await auth.signInWithEmailAndPassword(email, password);
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  async function updateUserData() {
+    const uid = auth.currentUser.uid;
+    const member = document.getElementById("memberName").value.trim();
+    const month = document.getElementById("monthPicker").value;
+
+    if (!member || !month) return;
+
+    const docRef = db.collection("tracker").doc(uid + "_" + member + "_" + month);
+    let doc = await docRef.get();
+
+    if (!doc.exists) {
+      await docRef.set({ devotions: [], attendance: [] });
+      doc = await docRef.get();
     }
 
-    function renderAttendance() {
-      attendanceForms.innerHTML = "";
+    const data = doc.data();
+    document.getElementById("userData").innerHTML = `
+      <strong>${member} - ${month}</strong><br>
+      Devotions: ${data.devotions.length} days<br>
+      Attendance: ${data.attendance.length} meetings
+    `;
+  }
 
-      const username = document.getElementById("username").value || "Anonymous";
+  async function loadAllUserData() {
+    const snapshot = await db.collection("tracker").get();
+    const out = [];
 
-      const title = document.createElement("div");
-      title.innerHTML = `
-        <strong>FULL MONTH ATTENDANCE</strong><br/>
-        <strong>Legend:</strong> <span style='color:green'>Green = Present</span>, 
-        <span style='color:red'>Red = Absent</span>, 
-        <span style='color:gray'>Gray = No Meeting</span><br/><br/>
-      `;
-      attendanceForms.appendChild(title);
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      out.push(`<p><strong>${doc.id}</strong><br>
+        Devotions: ${d.devotions.length}<br>
+        Attendance: ${d.attendance.length}</p>`);
+    });
 
-      sections.forEach(section => {
-        const label = document.createElement("label");
-        label.textContent = section;
-        attendanceForms.appendChild(label);
+    document.getElementById("allUserData").innerHTML = out.join('');
+  }
 
-        const grid = document.createElement("div");
-        grid.className = "attendance-grid";
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const roleInput = document.getElementById("role");
+</script>
 
-        for (let i = 1; i <= 5; i++) {
-          const btn = document.createElement("button");
-          const weekLabels = ["1st week", "2nd week", "3rd week", "4th week", "5th week"];
-          btn.textContent = weekLabels[i - 1];
-
-          const docId = `${username}_${currentMonth}_${section}_${i}`;
-          db.collection("attendance").doc(docId).get().then(doc => {
-            if (doc.exists) btn.className = doc.data().status;
-          });
-
-          btn.onclick = () => {
-            const next = btn.classList.contains("P") ? "A" : btn.classList.contains("A") ? "NM" : "P";
-            btn.className = next;
-            db.collection("attendance").doc(docId).set({
-              user: username,
-              month: currentMonth,
-              section,
-              week: i,
-              status: next
-            });
-          };
-          grid.appendChild(btn);
-        }
-        attendanceForms.appendChild(grid);
-      });
-    }
-
-    renderMonthButtons();
-    renderCalendar();
-    renderAttendance();
-  </script>
 </body>
 </html>
