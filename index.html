@@ -114,17 +114,12 @@
       <span style="color: gray;">Gray</span> = No Meeting
     </div>
 
-    <div class="attendance-grid" id="attendance-grid">
-      <!-- Dynamic content -->
-    </div>
-
+    <div class="attendance-grid" id="attendance-grid"></div>
     <button id="downloadBtn" onclick="downloadAttendance()">Download Attendance</button>
 
     <div class="calendar" id="calendar">
       <h4>Calendar for <span id="calendar-title">January 2025</span></h4>
-      <div class="calendar-grid" id="calendar-grid">
-        <!-- Calendar goes here -->
-      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
     </div>
   </div>
 
@@ -138,7 +133,6 @@
       "THURSDAY TRAINING",
       "PRAYER MEETING"
     ];
-
     const weeks = ["1st week", "2nd week", "3rd week", "4th week", "5th week"];
     const months = [
       "January", "February", "March", "April", "May", "June",
@@ -147,6 +141,40 @@
 
     let currentMonthIndex = 0;
 
+    function getUserKey(suffix = "") {
+      const name = document.getElementById("userEmail").value.trim() || "anonymous";
+      return `CYM_${name}_${months[currentMonthIndex]}_${suffix}`;
+    }
+
+    function saveAttendance() {
+      const data = [];
+      const rows = document.querySelectorAll("#attendance-grid .week-row");
+      rows.forEach(row => {
+        const statusRow = [];
+        row.querySelectorAll("button").forEach(btn => {
+          statusRow.push(btn.textContent);
+        });
+        data.push(statusRow);
+      });
+      localStorage.setItem(getUserKey("attendance"), JSON.stringify(data));
+    }
+
+    function loadAttendance() {
+      const saved = localStorage.getItem(getUserKey("attendance"));
+      return saved ? JSON.parse(saved) : null;
+    }
+
+    function saveCalendarChecks() {
+      const checkboxes = document.querySelectorAll("#calendar-grid input[type='checkbox']");
+      const states = Array.from(checkboxes).map(cb => cb.checked);
+      localStorage.setItem(getUserKey("calendar"), JSON.stringify(states));
+    }
+
+    function loadCalendarChecks() {
+      const saved = localStorage.getItem(getUserKey("calendar"));
+      return saved ? JSON.parse(saved) : [];
+    }
+
     function loadMonth(monthIndex) {
       currentMonthIndex = monthIndex;
       document.getElementById("month-title").textContent = months[monthIndex];
@@ -154,6 +182,9 @@
 
       const grid = document.getElementById("attendance-grid");
       grid.innerHTML = "";
+
+      const savedAttendance = loadAttendance();
+      let rowIndex = 0;
 
       meetings.forEach(meeting => {
         const label = document.createElement("div");
@@ -164,10 +195,14 @@
         const weekRow = document.createElement("div");
         weekRow.className = "week-row";
 
-        weeks.forEach(() => {
+        weeks.forEach((_, weekIndex) => {
           const btn = document.createElement("button");
-          btn.textContent = "NM";
-          btn.className = "NM";
+          let val = "NM";
+          if (savedAttendance && savedAttendance[rowIndex]) {
+            val = savedAttendance[rowIndex][weekIndex] || "NM";
+          }
+          btn.textContent = val;
+          btn.className = val;
           btn.onclick = function () {
             if (btn.className === "NM") {
               btn.className = "P";
@@ -179,38 +214,41 @@
               btn.className = "NM";
               btn.textContent = "NM";
             }
+            saveAttendance();
           };
           weekRow.appendChild(btn);
         });
 
         grid.appendChild(weekRow);
+        rowIndex++;
       });
 
       buildCalendar(2025, monthIndex);
     }
 
     function buildCalendar(year, month) {
-      const calendarGrid = document.getElementById("calendar-grid");
-      calendarGrid.innerHTML = "";
+      const grid = document.getElementById("calendar-grid");
+      grid.innerHTML = "";
 
-      const firstDay = new Date(year, month, 1).getDay(); // 0 = Sunday
+      const firstDay = new Date(year, month, 1).getDay(); // Sunday=0
       const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const savedChecks = loadCalendarChecks();
 
-      // Blank cells before first day
       for (let i = 0; i < firstDay; i++) {
-        const emptyCell = document.createElement("div");
-        calendarGrid.appendChild(emptyCell);
+        grid.appendChild(document.createElement("div")); // Empty cells
       }
 
-      // Fill in days
       for (let day = 1; day <= daysInMonth; day++) {
-        const dayCell = document.createElement("div");
-        dayCell.className = "calendar-cell";
-        dayCell.innerHTML = `
-          <div>${day}</div>
-          <input type="checkbox" />
-        `;
-        calendarGrid.appendChild(dayCell);
+        const cell = document.createElement("div");
+        cell.className = "calendar-cell";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = savedChecks[day - 1] || false;
+        cb.onchange = saveCalendarChecks;
+
+        cell.innerHTML = `<div>${day}</div>`;
+        cell.appendChild(cb);
+        grid.appendChild(cell);
       }
     }
 
@@ -241,7 +279,6 @@
       a.click();
     }
 
-    // Load January on page load
     window.onload = () => {
       loadMonth(0);
     };
