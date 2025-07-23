@@ -158,26 +158,47 @@
       document.getElementById("checked-count").innerText = checkedDays;
     }
 
-    function renderMeetingStatus() {
-      const list = document.getElementById("meeting-list");
-      list.innerHTML = "";
-      meetingTypes.forEach(name => {
-        const row = document.createElement("div");
-        row.className = "meeting-item";
-        row.innerHTML = `<span>${name}</span>`;
-        for (let i = 0; i < 5; i++) {
-          const box = document.createElement("div");
-          box.className = "status-box";
-          box.onclick = () => {
-            if (box.style.background === "gray") box.style.background = "green";
-            else if (box.style.background === "green") box.style.background = "red";
-            else box.style.background = "gray";
-          };
-          row.appendChild(box);
-        }
-        list.appendChild(row);
-      });
+function renderMeetingStatus() {
+  const list = document.getElementById("meeting-list");
+  list.innerHTML = "";
+
+  meetingTypes.forEach(name => {
+    const row = document.createElement("div");
+    row.className = "meeting-item";
+    
+    // Meeting name label with spacing
+    row.innerHTML = `<span style="width: 180px;">${name}</span>`;
+
+    // Add Week 1 to Week 5 status boxes with labels
+    for (let i = 1; i <= 5; i++) {
+      const label = document.createElement("span");
+      label.textContent = `Week ${i}`;
+      label.style.fontSize = "12px";
+      label.style.marginBottom = "4px";
+
+      const box = document.createElement("div");
+      box.className = "status-box";
+      box.title = `Click to toggle Week ${i} status`;
+      box.onclick = () => {
+        if (box.style.background === "gray") box.style.background = "green";
+        else if (box.style.background === "green") box.style.background = "red";
+        else box.style.background = "gray";
+      };
+
+      const stack = document.createElement("div");
+      stack.style.display = "flex";
+      stack.style.flexDirection = "column";
+      stack.style.alignItems = "center";
+      stack.style.marginRight = "12px";
+      stack.appendChild(label);
+      stack.appendChild(box);
+
+      row.appendChild(stack);
     }
+
+    list.appendChild(row);
+  });
+}
   </script>
 </body>
 </html>
