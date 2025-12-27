@@ -4,105 +4,118 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CYM Leader Tracker</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
       background: #f5f5f5;
     }
+
     header {
       background: #222;
       color: #fff;
       padding: 1em;
       text-align: center;
     }
+
     .container {
       max-width: 900px;
       margin: auto;
       padding: 1em;
     }
+
     .month-selector {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 1em;
     }
+
     .month-selector button {
       padding: 0.5em 1em;
       border: none;
       background: #ccc;
       cursor: pointer;
     }
+
     .month-selector button.active {
       background: #4CAF50;
       color: white;
     }
+
     .form-section {
       background: #fff;
       padding: 1em;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 5px;
       margin-top: 1em;
     }
+
     .calendar div {
       background: #fff;
       border: 1px solid #ccc;
       padding: 0.5em;
       text-align: center;
-      font-size: 14px;
     }
-    .calendar input[type="checkbox"] {
-      margin-top: 5px;
-    }
+
     .attendance-section {
       margin-top: 2em;
     }
-    .attendance-section label {
-      font-weight: bold;
-      display: block;
-      margin-top: 1em;
-    }
+
     .attendance-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 4px;
-      margin-top: 0.5em;
     }
+
     .attendance-grid button {
       padding: 0.4em;
-      background: #eee;
       border: 1px solid #ccc;
       cursor: pointer;
+      background: #eee;
     }
-    .attendance-grid button.P { background: #4CAF50; color: white; }
-    .attendance-grid button.A { background: #f44336; color: white; }
-    .attendance-grid button.NM { background: #999; color: white; }
+
+    .attendance-grid button.P { background: #4CAF50; color: #fff; }
+    .attendance-grid button.A { background: #f44336; color: #fff; }
+    .attendance-grid button.NM { background: #999; color: #fff; }
+
+    .attendance-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .attendees-input {
+      width: 90px;
+      padding: 5px;
+    }
   </style>
 </head>
 
 <body>
 <header>
-  <h1>CYM Leader Tracker</h1>
+  <h1>CYM 2025 Leader Tracker</h1>
   <div id="user-info"></div>
 </header>
 
 <div class="container">
 
-  <div style="text-align:center; margin: 15px;">
-    <button onclick="saveFullPageImage()" style="padding:10px 20px; background:#4CAF50; color:#fff; border:none; border-radius:5px; cursor:pointer;">
-      Click here to save Full Page as Image
+  <div style="text-align:center; margin:15px;">
+    <button onclick="saveFullPageImage()" style="padding:10px 20px;background:#4CAF50;color:#fff;border:none;border-radius:5px;">
+      Save Full Page as Image
     </button>
   </div>
 
   <div style="text-align:center; margin-bottom:20px;">
-    <label><strong>Insert Name:</strong></label><br/>
-    <input id="username" placeholder="Type your full name..." style="padding:5px; width:80%; max-width:400px;">
+    <input id="username" placeholder="Type your full name..." style="padding:6px;width:80%;max-width:400px;">
   </div>
 
   <div class="month-selector" id="month-selector"></div>
@@ -113,16 +126,12 @@
     <div id="calendar" class="calendar"></div>
     <div class="attendance-section" id="attendance-forms"></div>
   </div>
-
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-  const months = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-  ];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
   const sections = [
     "W12 MEETING",
@@ -139,22 +148,21 @@
   const currentYear = today.getFullYear();
 
   const monthSelector = document.getElementById("month-selector");
-  const monthTitle = document.getElementById("month-title");
   const calendarDiv = document.getElementById("calendar");
   const attendanceForms = document.getElementById("attendance-forms");
 
-  function daysInMonth(month, year) {
-    return new Date(year, month + 1, 0).getDate();
+  function daysInMonth(m, y) {
+    return new Date(y, m + 1, 0).getDate();
   }
 
   function renderMonthButtons() {
     monthSelector.innerHTML = "";
-    months.forEach((month, index) => {
+    months.forEach((m, i) => {
       const btn = document.createElement("button");
-      btn.textContent = month;
-      if (index === currentMonth) btn.classList.add("active");
+      btn.textContent = m;
+      if (i === currentMonth) btn.classList.add("active");
       btn.onclick = () => {
-        currentMonth = index;
+        currentMonth = i;
         document.querySelectorAll(".month-selector button").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         renderCalendar();
@@ -164,14 +172,9 @@
     });
   }
 
-  function updateDevotionCount() {
-    const checked = document.querySelectorAll('#calendar input[type="checkbox"]:checked').length;
-    document.getElementById("devotion-count").textContent = checked;
-  }
-
   function renderCalendar() {
     calendarDiv.innerHTML = "";
-    monthTitle.textContent = `${months[currentMonth]} ${currentYear}`;
+    document.getElementById("month-title").textContent = `${months[currentMonth]} ${currentYear}`;
 
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d => {
       const cell = document.createElement("div");
@@ -183,39 +186,46 @@
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     for (let i = 0; i < firstDay; i++) calendarDiv.appendChild(document.createElement("div"));
 
-    for (let day = 1; day <= daysInMonth(currentMonth, currentYear); day++) {
+    let devotionCount = 0;
+
+    for (let d = 1; d <= daysInMonth(currentMonth, currentYear); d++) {
       const cell = document.createElement("div");
       const cb = document.createElement("input");
       cb.type = "checkbox";
-      cb.checked = JSON.parse(localStorage.getItem(`devotion_${currentYear}_${currentMonth}_${day}`)) || false;
+      const key = `devotion_${currentYear}_${currentMonth}_${d}`;
+      cb.checked = JSON.parse(localStorage.getItem(key)) || false;
+      if (cb.checked) devotionCount++;
+
       cb.onchange = () => {
-        localStorage.setItem(`devotion_${currentYear}_${currentMonth}_${day}`, cb.checked);
-        updateDevotionCount();
+        localStorage.setItem(key, cb.checked);
+        renderCalendar();
       };
-      cell.innerHTML = `${day}<br/>`;
+
+      cell.innerHTML = d + "<br>";
       cell.appendChild(cb);
       calendarDiv.appendChild(cell);
     }
-    updateDevotionCount();
+
+    document.getElementById("devotion-count").textContent = devotionCount;
   }
 
   function renderAttendance() {
-    attendanceForms.innerHTML = `
-      <strong>FULL MONTH ATTENDANCE</strong><br/>
-      <small>Green = Present | Red = Absent | Gray = No Meeting</small><br/><br/>
-    `;
+    attendanceForms.innerHTML = "<strong>FULL MONTH ATTENDANCE</strong><br><br>";
 
     sections.forEach(section => {
       const label = document.createElement("label");
-      label.textContent = section;
+      label.innerHTML = `<strong>${section}</strong>`;
       attendanceForms.appendChild(label);
+
+      const row = document.createElement("div");
+      row.className = "attendance-row";
 
       const grid = document.createElement("div");
       grid.className = "attendance-grid";
 
-      ["1st","2nd","3rd","4th","5th"].forEach((w, i) => {
+      for (let i = 1; i <= 5; i++) {
         const btn = document.createElement("button");
-        btn.textContent = `${w} week`;
+        btn.textContent = `${i}W`;
         const key = `attendance_${currentYear}_${currentMonth}_${section}_${i}`;
         const state = localStorage.getItem(key);
         if (state) btn.className = state;
@@ -226,38 +236,47 @@
           localStorage.setItem(key, next);
         };
         grid.appendChild(btn);
-      });
-      attendanceForms.appendChild(grid);
+      }
+
+      row.appendChild(grid);
+
+      if (section === "W12 MEETING" || section === "CELL GROUP") {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.min = 0;
+        input.placeholder = "Attendees";
+        input.className = "attendees-input";
+        const key = `attendees_${currentYear}_${currentMonth}_${section}`;
+        input.value = localStorage.getItem(key) || "";
+        input.oninput = () => localStorage.setItem(key, input.value);
+        row.appendChild(input);
+      }
+
+      attendanceForms.appendChild(row);
     });
   }
 
   function saveFullPageImage() {
-    html2canvas(document.body).then(canvas => {
+    html2canvas(document.body).then(c => {
       const a = document.createElement("a");
       a.download = "CYM_Leader_Tracker.png";
-      a.href = canvas.toDataURL();
+      a.href = c.toDataURL();
       a.click();
     });
   }
 
   const usernameInput = document.getElementById("username");
-  const userInfo = document.getElementById("user-info");
+  usernameInput.value = localStorage.getItem("username") || "";
+  document.getElementById("user-info").textContent = usernameInput.value ? "User: " + usernameInput.value : "";
 
   usernameInput.oninput = () => {
     localStorage.setItem("username", usernameInput.value);
-    userInfo.textContent = "User: " + usernameInput.value;
+    document.getElementById("user-info").textContent = "User: " + usernameInput.value;
   };
 
-  window.onload = () => {
-    const name = localStorage.getItem("username");
-    if (name) {
-      usernameInput.value = name;
-      userInfo.textContent = "User: " + name;
-    }
-    renderMonthButtons();
-    renderCalendar();
-    renderAttendance();
-  };
+  renderMonthButtons();
+  renderCalendar();
+  renderAttendance();
 </script>
 </body>
 </html>
