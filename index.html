@@ -200,30 +200,34 @@ function renderAttendance(){
     const grid=document.createElement("div");
     grid.className="attendance-grid";
 
-    for(let w=1;w<=5;w++){
+    for(let w=1; w<=5; w++){
       const b=document.createElement("button");
       b.textContent=`Week ${w}`;
+
       const key=`att_${currentMonth}_${sec}_${w}`;
-      const s=localStorage.getItem(key);
+      const saved=localStorage.getItem(key) || "NM";
 
-      if(s){
-        b.dataset.state=s;
-        b.classList.add(s);
-      } else {
-        b.dataset.state="NM";
-        b.classList.add("NM");
-      }
+      // Force consistent initial state
+      b.dataset.state = saved;
+      b.classList.add(saved);
 
-      b.onclick=()=>{
+      // Toggle logic
+      b.onclick = () => {
+        let next;
+        if (b.dataset.state === "NM") next = "P";
+        else if (b.dataset.state === "P") next = "A";
+        else next = "NM";
+
         b.classList.remove("P","A","NM");
-        let n=b.dataset.state==="P"?"A":b.dataset.state==="A"?"NM":"P";
-        b.dataset.state=n;
-        b.classList.add(n);
-        localStorage.setItem(key,n);
+        b.classList.add(next);
+        b.dataset.state = next;
+
+        localStorage.setItem(key, next);
       };
 
       grid.appendChild(b);
     }
+
     a.appendChild(grid);
   });
 }
