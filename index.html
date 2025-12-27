@@ -1,124 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CYM Leader Tracker</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYM Leader Tracker</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-    }
-
-    header {
-      background: #222;
-      color: #fff;
-      padding: 1em;
-      text-align: center;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 1em;
-    }
-
-    .month-selector {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 1em;
-    }
-
-    .month-selector button {
-      padding: 6px 12px;
-      border: none;
-      background: #ccc;
-      cursor: pointer;
-    }
-
-    .month-selector button.active {
-      background: #4CAF50;
-      color: white;
-    }
-
-    .form-section {
-      background: #fff;
-      padding: 1em;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-      margin-top: 10px;
-    }
-
-    .calendar div {
-      border: 1px solid #ccc;
-      padding: 6px;
-      font-size: 13px;
-      text-align: center;
-    }
-
-    .attendance-section {
-      margin-top: 2em;
-    }
-
-    .attendance-section label {
-      font-weight: bold;
-      margin-top: 1em;
-      display: block;
-    }
-
-    .attendance-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
-      margin-top: 6px;
-    }
-
-    .attendance-grid button {
-      padding: 6px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-      background: #eee;
-      font-size: 12px;
-    }
-
-    .attendance-grid button.P { background:#4CAF50; color:#fff; }
-    .attendance-grid button.A { background:#f44336; color:#fff; }
-    .attendance-grid button.NM { background:#999; color:#fff; }
-
-    /* LEGEND FIX */
-    .legend {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 12px;
-      font-size: 13px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend-box {
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-    }
-
-    .legend-present { background:#4CAF50; }
-    .legend-absent { background:#f44336; }
-    .legend-nm { background:#999; }
-  </style>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f5f5;
+}
+header {
+  background: #222;
+  color: #fff;
+  padding: 1em;
+  text-align: center;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 1em;
+}
+.month-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1em;
+}
+.month-selector button {
+  padding: 0.5em 1em;
+  border: none;
+  background: #ccc;
+  cursor: pointer;
+}
+.month-selector button.active {
+  background: #4CAF50;
+  color: white;
+}
+.form-section {
+  background: #fff;
+  padding: 1em;
+  border-radius: 8px;
+}
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.calendar div {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
+.attendance-section label {
+  display: block;
+  margin-top: 1em;
+  font-weight: bold;
+}
+.attendance-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  margin-top: 5px;
+}
+.attendance-grid button {
+  padding: 6px;
+  border: 1px solid #ccc;
+  background: #eee;
+  cursor: pointer;
+}
+.attendance-grid button.P { background: #4CAF50; color: white; }
+.attendance-grid button.A { background: #f44336; color: white; }
+.attendance-grid button.NM { background: #999; color: white; }
+.legend span {
+  font-size: 14px;
+  margin-right: 10px;
+}
+</style>
 </head>
 
 <body>
@@ -130,37 +89,32 @@
 
 <div class="container">
 
-  <div style="text-align:center;margin:15px;">
-    <button onclick="saveFullPageImage()"
-      style="padding:10px 20px;background:#4CAF50;color:#fff;border:none;border-radius:5px;cursor:pointer;">
-      Click here to save Full Page as Image
-    </button>
-  </div>
+<div style="text-align:center; margin:15px;">
+<button onclick="saveFullPageImage()" style="padding:10px 20px;background:#4CAF50;color:#fff;border:none;border-radius:5px;">
+Save Page as Image
+</button>
+</div>
 
-  <div style="text-align:center;margin-bottom:20px;">
-    <label><strong>Insert Name:</strong></label><br>
-    <input id="username" placeholder="Type your full name..."
-      style="padding:6px;width:80%;max-width:400px;">
-  </div>
+<div style="text-align:center; margin-bottom:20px;">
+<input id="username" placeholder="Enter full name" style="padding:6px;width:80%;max-width:350px;">
+</div>
 
-  <div class="month-selector" id="month-selector"></div>
+<div id="month-selector" class="month-selector"></div>
 
-  <div class="form-section">
-    <h2 id="month-title"></h2>
-    <h3>DEVOTION: <span id="devotion-count">0</span> days checked</h3>
+<div class="form-section">
+<h2 id="month-title"></h2>
+<h3>DEVOTION: <span id="devotion-count">0</span> days</h3>
+<div id="calendar" class="calendar"></div>
 
-    <div id="calendar" class="calendar"></div>
-
-    <div class="attendance-section" id="attendance-forms"></div>
-  </div>
+<div class="attendance-section" id="attendance-forms"></div>
+</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-const sections=[
+const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const sections = [
   "W12 MEETING",
   "W12 DISCIPLESHIP",
   "CELL GROUP",
@@ -170,18 +124,16 @@ const sections=[
   "PRAYER MEETING"
 ];
 
-const monthSelector=document.getElementById("month-selector");
-const calendarDiv=document.getElementById("calendar");
-const attendanceForms=document.getElementById("attendance-forms");
-const monthTitle=document.getElementById("month-title");
+let currentMonth = 0;
+const year = 2025;
 
-let currentMonth=0;
+function daysInMonth(m,y){ return new Date(y,m+1,0).getDate(); }
 
 function renderMonthButtons(){
   months.forEach((m,i)=>{
     const b=document.createElement("button");
     b.textContent=m;
-    if(i===0)b.classList.add("active");
+    if(i===0) b.classList.add("active");
     b.onclick=()=>{
       currentMonth=i;
       document.querySelectorAll(".month-selector button").forEach(x=>x.classList.remove("active"));
@@ -189,99 +141,112 @@ function renderMonthButtons(){
       renderCalendar();
       renderAttendance();
     };
-    monthSelector.appendChild(b);
+    document.getElementById("month-selector").appendChild(b);
   });
 }
 
 function renderCalendar(){
-  calendarDiv.innerHTML="";
-  monthTitle.textContent=months[currentMonth];
-  const year=2025;
-  const days=new Date(year,currentMonth+1,0).getDate();
+  const cal=document.getElementById("calendar");
+  cal.innerHTML="";
+  document.getElementById("month-title").textContent=months[currentMonth];
 
   ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
-    const h=document.createElement("div");
-    h.style.fontWeight="bold";
-    h.textContent=d;
-    calendarDiv.appendChild(h);
+    const x=document.createElement("div");
+    x.innerHTML="<b>"+d+"</b>";
+    cal.appendChild(x);
   });
 
   const first=new Date(year,currentMonth,1).getDay();
-  for(let i=0;i<first;i++)calendarDiv.appendChild(document.createElement("div"));
+  for(let i=0;i<first;i++) cal.appendChild(document.createElement("div"));
 
-  for(let i=1;i<=days;i++){
+  for(let d=1;d<=daysInMonth(currentMonth,year);d++){
     const c=document.createElement("div");
     const cb=document.createElement("input");
     cb.type="checkbox";
-    cb.checked=JSON.parse(localStorage.getItem(`dev_${currentMonth}_${i}`))||false;
+    cb.checked=localStorage.getItem(`dev_${currentMonth}_${d}`)==="1";
     cb.onchange=()=>{
-      localStorage.setItem(`dev_${currentMonth}_${i}`,cb.checked);
+      localStorage.setItem(`dev_${currentMonth}_${d}`,cb.checked?"1":"0");
       updateDevotion();
     };
-    c.innerHTML=i+"<br>";
+    c.innerHTML=d+"<br>";
     c.appendChild(cb);
-    calendarDiv.appendChild(c);
+    cal.appendChild(c);
   }
   updateDevotion();
 }
 
 function updateDevotion(){
-  const total=[...calendarDiv.querySelectorAll("input")].filter(c=>c.checked).length;
-  document.getElementById("devotion-count").textContent=total;
+  let c=0;
+  document.querySelectorAll("#calendar input").forEach(x=>{ if(x.checked) c++; });
+  document.getElementById("devotion-count").textContent=c;
 }
 
 function renderAttendance(){
-  attendanceForms.innerHTML="";
-
-  attendanceForms.innerHTML+=`
-    <strong>FULL MONTH ATTENDANCE</strong>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-box legend-present"></div>Present</div>
-      <div class="legend-item"><div class="legend-box legend-absent"></div>Absent</div>
-      <div class="legend-item"><div class="legend-box legend-nm"></div>No Meeting</div>
-    </div>
+  const a=document.getElementById("attendance-forms");
+  a.innerHTML=`
+  <strong>FULL MONTH ATTENDANCE</strong><br>
+  <div class="legend">
+    <span style="color:#4CAF50;">Green = Present</span>
+    <span style="color:#f44336;">Red = Absent</span>
+    <span style="color:#999;">Gray = No Meeting</span>
+  </div><br>
   `;
 
   sections.forEach(sec=>{
-    attendanceForms.innerHTML+=`<label>${sec}</label>`;
-    const g=document.createElement("div");
-    g.className="attendance-grid";
+    const lab=document.createElement("label");
+    lab.textContent=sec;
+    a.appendChild(lab);
 
-    ["1st","2nd","3rd","4th","5th"].forEach((w,i)=>{
+    const grid=document.createElement("div");
+    grid.className="attendance-grid";
+
+    for(let w=1;w<=5;w++){
       const b=document.createElement("button");
-      b.textContent=w+" week";
-      const key=`att_${currentMonth}_${sec}_${i}`;
+      b.textContent=`Week ${w}`;
+      const key=`att_${currentMonth}_${sec}_${w}`;
       const s=localStorage.getItem(key);
-      if(s)b.className=s;
+
+      if(s){
+        b.dataset.state=s;
+        b.classList.add(s);
+      } else {
+        b.dataset.state="NM";
+        b.classList.add("NM");
+      }
+
       b.onclick=()=>{
-        const n=b.className==="P"?"A":b.className==="A"?"NM":"P";
-        b.className=n;
+        b.classList.remove("P","A","NM");
+        let n=b.dataset.state==="P"?"A":b.dataset.state==="A"?"NM":"P";
+        b.dataset.state=n;
+        b.classList.add(n);
         localStorage.setItem(key,n);
       };
-      g.appendChild(b);
-    });
 
-    attendanceForms.appendChild(g);
+      grid.appendChild(b);
+    }
+    a.appendChild(grid);
   });
 }
 
 function saveFullPageImage(){
   html2canvas(document.body).then(c=>{
-    const a=document.createElement("a");
-    a.download="cym-tracker.png";
-    a.href=c.toDataURL();
-    a.click();
+    const l=document.createElement("a");
+    l.download="cym-tracker.png";
+    l.href=c.toDataURL();
+    l.click();
   });
 }
 
-const username=document.getElementById("username");
-username.oninput=()=>{
-  localStorage.setItem("username",username.value);
-  document.getElementById("user-info").textContent="User: "+username.value;
+document.getElementById("username").oninput=e=>{
+  localStorage.setItem("user",e.target.value);
+  document.getElementById("user-info").textContent="User: "+e.target.value;
 };
 window.onload=()=>{
-  const n=localStorage.getItem("username");
-  if(n){username.value=n;document.getElementById("user-info").textContent="User: "+n;}
+  const u=localStorage.getItem("user");
+  if(u){
+    document.getElementById("username").value=u;
+    document.getElementById("user-info").textContent="User: "+u;
+  }
 };
 
 renderMonthButtons();
