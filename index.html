@@ -34,22 +34,31 @@ header { background:#222; color:#fff; padding:1em; text-align:center; }
   gap:4px;
 }
 
-.attendance-grid button {
+.attendance-grid button,
+.legend-btn {
   padding:6px;
+  min-width:36px;
   border:1px solid #ccc;
   background:#eee;
   cursor:pointer;
+  text-align:center;
 }
 
-button.P { background:#4CAF50; color:white; }
-button.A { background:#f44336; color:white; }
-button.NM { background:#999; color:white; }
+button.P, .legend-present { background:#4CAF50; color:white; }
+button.A, .legend-absent { background:#f44336; color:white; }
+button.NM, .legend-nm { background:#999; color:white; }
 
 .week-input {
   width:32px;
   padding:4px;
   font-size:12px;
   text-align:center;
+}
+.legend-row {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:12px;
 }
 </style>
 </head>
@@ -77,7 +86,15 @@ button.NM { background:#999; color:white; }
 
 <script>
 const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
-const sections=["W12 MEETING","W12 DISCIPLESHIP","CELL GROUP","SUNDAY SERVICE","CYM NIGHT","THURSDAY TRAINING","PRAYER MEETING"];
+const sections=[
+  "W12 MEETING",
+  "W12 DISCIPLESHIP",
+  "CELL GROUP",
+  "SUNDAY SERVICES",
+  "CYM NIGHT",
+  "THURSDAY NIGHT TRAINING",
+  "PRAYER MEETING"
+];
 
 const today=new Date();
 let currentMonth=today.getMonth();
@@ -138,13 +155,13 @@ document.getElementById("devotion-count").textContent=count;
 
 function renderAttendance(){
 attendanceForms.innerHTML=`
-<strong>FULL MONTH ATTENDANCE</strong><br>
-<small>
-<span style="color:#4CAF50;">Green – Present</span> |
-<span style="color:#f44336;">Red – Absent</span> |
-<span style="color:#999;">Gray – No Meeting</span>
-</small>
-<br><br>
+<strong>FULL MONTH ATTENDANCE</strong>
+
+<div class="legend-row">
+  <div class="legend-btn legend-present">P</div><span>Present</span>
+  <div class="legend-btn legend-absent">A</div><span>Absent</span>
+  <div class="legend-btn legend-nm">NM</div><span>No Meeting</span>
+</div>
 `;
 
 sections.forEach(section=>{
